@@ -5,15 +5,9 @@
  */
 package chat;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
@@ -28,7 +22,8 @@ public class Chat extends javax.swing.JFrame {
     private static SSLSocket cliente;
     static SSLSocketFactory socketFactory;
     OutputStream os;
-    final static String SERVER_MESSAGE = "Bienvenido al servidor :)";
+    final static String SERVER_MESSAGE = "Bienvenido al servidor :)"; //Mensaje que aparecerá en el registro de mensajes
+    //una vez el cliente se conecte al servidor
 
     public Chat() {
         initComponents();
@@ -92,20 +87,20 @@ public class Chat extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void submitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submitActionPerformed
-        String mensaje = input.getText();
-        if (!mensaje.isEmpty()) {
+        String mensaje = input.getText(); //Recojo el texto que escribió el usuario
+        if (!mensaje.isEmpty()) { //Si el mensaje no es una cadena vacía
             try {
-                os = cliente.getOutputStream();
-                os.write(mensaje.getBytes());
-                display.append("Yo: " + mensaje + "\n");
+                os = cliente.getOutputStream(); //Abro el flujo de salida hacia el servidor
+                os.write(mensaje.getBytes()); //Escribo en el flujo los bytes del mensaje
+                display.append("Yo: " + mensaje + "\n"); //Escribo el mensaje en el registro de mensajes
             } catch (IOException ex) {
                 Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        if (mensaje.equals(".bye")) {
+        if (mensaje.equals(".bye")) { //Si el mensaje es .bye escribo en el registro de mensajes "Servidor Cerrado"
             display.append("Servidor cerrado\n");
         }
-        input.setText("");
+        input.setText(""); //Limpio la caja de texto
     }//GEN-LAST:event_submitActionPerformed
 
     /**
@@ -134,19 +129,23 @@ public class Chat extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(Chat.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        /*
+        Añadimos estas propiedades en la ejecución del cliente para que sepa
+        donde está su almacén de claves y los certificados en los que confía
+        */
         System.setProperty("javax.net.ssl.keystore", "clientKey.jks");
         System.setProperty("javax.net.ssl.trustStore", "ClientTrustedCerts.jks");
         System.setProperty("javax.net.ssl.keyStorePassword", "clientpass");
         System.setProperty("javax.net.ssl.trustStorePassword", "clientpass");
         socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
         try {
-            cliente = (SSLSocket) socketFactory.createSocket();
+            cliente = (SSLSocket) socketFactory.createSocket(); //Creo el socket SSL para el cliente
         } catch (IOException ex) {
             Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
         }
-        InetSocketAddress dir = new InetSocketAddress("localhost", 5555);
+        InetSocketAddress dir = new InetSocketAddress("localhost", 5555); //Creo la direccion hacia el servidor
         try {
-            cliente.connect(dir);
+            cliente.connect(dir); //Conecto el socket cliente al del servidor
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
@@ -155,11 +154,11 @@ public class Chat extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new Chat().setVisible(true);
-                if (cliente.isConnected()) {
+                if (cliente.isConnected()) { //Si el cliente se conecta con éxito al servidor añado el siguiente mensaje al registro de mensajes
                     display.append(SERVER_MESSAGE + "\n");
                     System.out.println(SERVER_MESSAGE);
                 } else {
-                    display.append("Error: No se puede conectar al servidor.");
+                    display.append("Error: No se puede conectar al servidor."); //En caso contrario añado el siguiente mensaje
                 }
             }
         });
