@@ -8,6 +8,8 @@ package chat;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
@@ -24,19 +26,12 @@ import javax.net.ssl.SSLSocketFactory;
 public class Chat extends javax.swing.JFrame {
 
     private static SSLSocket cliente;
-    SSLSocketFactory socketFactory;
-    DataOutputStream os;
-    DataInputStream is;
+    static SSLSocketFactory socketFactory;
+    OutputStream os;
     final static String SERVER_MESSAGE = "Bienvenido al servidor :)";
 
     public Chat() {
         initComponents();
-        socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-        try {
-            cliente = (SSLSocket) socketFactory.createSocket();
-        } catch (IOException ex) {
-            Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     /**
@@ -100,10 +95,9 @@ public class Chat extends javax.swing.JFrame {
         String mensaje = input.getText();
         if (!mensaje.isEmpty()) {
             try {
-                os = new DataOutputStream(cliente.getOutputStream());
-                is = new DataInputStream(cliente.getInputStream());
-                os.writeUTF(mensaje);
-                display.append("Yo: " + is.readUTF() + "\n");
+                os = cliente.getOutputStream();
+                os.write(mensaje.getBytes());
+                display.append("Yo: " + mensaje + "\n");
             } catch (IOException ex) {
                 Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -140,19 +134,27 @@ public class Chat extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(Chat.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        System.setProperty("javax.net.ssl.keystore", "mySrvKeystore");
-        System.setProperty("javax.net.ssl.trustStore", "mySrvKeystore");
-        System.setProperty("javax.net.ssl.keyStorePassword", "003100729011");
+        System.setProperty("javax.net.ssl.keystore", "clientKey.jks");
+        System.setProperty("javax.net.ssl.trustStore", "ClientTrustedCerts.jks");
+        System.setProperty("javax.net.ssl.keyStorePassword", "clientpass");
+        System.setProperty("javax.net.ssl.trustStorePassword", "clientpass");
+        socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        try {
+            cliente = (SSLSocket) socketFactory.createSocket();
+        } catch (IOException ex) {
+            Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        InetSocketAddress dir = new InetSocketAddress("localhost", 5555);
+        try {
+            cliente.connect(dir);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new Chat().setVisible(true);
-                InetSocketAddress dir = new InetSocketAddress("localhost", 5555);
-                try {
-                    cliente.connect(dir);
-                } catch (IOException ex) {
-                    System.out.println(ex.getMessage());
-                }
                 if (cliente.isConnected()) {
                     display.append(SERVER_MESSAGE + "\n");
                     System.out.println(SERVER_MESSAGE);
